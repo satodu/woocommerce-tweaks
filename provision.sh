@@ -65,3 +65,6 @@ chown -R www-data:www-data /var/www/html/wp-content
 
 echo "Provisioning complete! Login at http://localhost:8500/wp-admin"
 echo "User: admin | Pass: password"
+
+# Keep the container running so we can use 'docker-compose exec cli ...'
+tail -f /dev/null

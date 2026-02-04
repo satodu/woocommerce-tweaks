@@ -1,15 +1,15 @@
 <?php
 /**
- * Plugin Name: WooCommerce Tweaks
+ * Plugin Name: Tweaks for WooCommerce
  * Plugin URI:  https://github.com/satodu/woocommerce-helpers
  * Description: A collection of custom tweaks and enhancements for WooCommerce, including Pix discounts, custom order statuses, and checkout improvements.
- * Version:     1.1.0
+ * Version:     1.1.1
  * Author:      Satodu
  * Author URI:  https://satodu.com
  * License:     GPL-2.0+
- * Text Domain: woocommerce-tweaks
+ * Text Domain: tweaks-for-woocommerce
  *
- * @package WooCommerceTweaks
+ * @package TweaksForWooCommerce
  */
 
 if (!defined('ABSPATH')) {
@@ -32,22 +32,26 @@ require_once plugin_dir_path(__FILE__) . 'admin/settings-page.php';
 function wc_tweaks_apply_custom_coupon()
 {
     // Verifica se o parâmetro 'coupon_code' está presente na URL
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Publicly accessible URL parameter for marketing purposes.
     if (isset($_GET['coupon_code'])) {
-        $coupon_code = sanitize_text_field($_GET['coupon_code']);
+        // WordPress Security: Use wp_unslash before sanitization
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Validated above.
+        $coupon_code = sanitize_text_field(wp_unslash($_GET['coupon_code']));
 
         // Adiciona o cupom ao carrinho
         if (WC()->cart && !empty($coupon_code)) {
             $applied = WC()->cart->apply_coupon($coupon_code);
 
             if ($applied) {
-                wc_add_notice(__('Cupom aplicado com sucesso!', 'woocommerce-tweaks'), 'success');
+                wc_add_notice(__('Cupom aplicado com sucesso!', 'tweaks-for-woocommerce'), 'success');
             } else {
-                wc_add_notice(__('Erro ao aplicar o cupom. Verifique o código.', 'woocommerce-tweaks'), 'error');
+                wc_add_notice(__('Erro ao aplicar o cupom. Verifique o código.', 'tweaks-for-woocommerce'), 'error');
             }
         }
 
         // Redireciona o usuário de volta ao carrinho ou checkout
-        wp_redirect(wc_get_checkout_url());
+        // WordPress Security: Use wp_safe_redirect
+        wp_safe_redirect(wc_get_checkout_url());
         exit;
     }
 }
@@ -68,14 +72,14 @@ function wc_tweaks_display_remove_link_checkout($item_data, $cart_item)
     $remove_link = sprintf(
         '<a href="%s" class="remove" aria-label="%s" data-product_id="%s" data-cart_item_key="%s">%s</a>',
         esc_url(wc_get_cart_remove_url($cart_item_key)),
-        esc_attr__('Remover este item', 'woocommerce-tweaks'),
+        esc_attr__('Remover este item', 'tweaks-for-woocommerce'),
         esc_attr($product_id),
         esc_attr($cart_item_key),
-        esc_html__('Remover', 'woocommerce-tweaks')
+        esc_html__('Remover', 'tweaks-for-woocommerce')
     );
 
     $item_data[] = array(
-        'key' => __('Ação', 'woocommerce-tweaks'),
+        'key' => __('Ação', 'tweaks-for-woocommerce'),
         'value' => $remove_link,
     );
 
@@ -124,7 +128,7 @@ function wc_tweaks_discount_for_asaas_pix($cart)
 
         // Ensure discount is not negative
         if ($discount > 0) {
-            $cart->add_fee(__('Desconto por pagamento via PIX', 'woocommerce-tweaks'), -$discount);
+            $cart->add_fee(__('Desconto por pagamento via PIX', 'tweaks-for-woocommerce'), -$discount);
         }
     }
 }
@@ -148,7 +152,7 @@ function wc_tweaks_reorder_payment_gateways($gateways)
     // Add prioritized gateways first
     foreach ($new_order as $gateway_id) {
         foreach ($gateways as $gateway) {
-            if ($gateway->id === $gateway_id) {
+            if (is_object($gateway) && isset($gateway->id) && $gateway->id === $gateway_id) {
                 $ordered_gateways[] = $gateway;
             }
         }
@@ -156,7 +160,7 @@ function wc_tweaks_reorder_payment_gateways($gateways)
 
     // Add remaining gateways
     foreach ($gateways as $gateway) {
-        if (!in_array($gateway->id, $new_order, true)) {
+        if (is_object($gateway) && isset($gateway->id) && !in_array($gateway->id, $new_order, true)) {
             $ordered_gateways[] = $gateway;
         }
     }
@@ -192,7 +196,6 @@ function wc_tweaks_register_custom_statuses()
                 'exclude_from_search' => false,
                 'show_in_admin_all_list' => true,
                 'show_in_admin_status_list' => true,
-                'label_count' => _n_noop($label . ' <span class="count">(%s)</span>', $label . ' <span class="count">(%s)</span>', 'woocommerce-tweaks')
             ));
         }
     }
