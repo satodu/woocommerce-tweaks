@@ -3,7 +3,7 @@ Contributors: satodu
 Tags: woocommerce, checkout, payments, pix, tweaks
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.1.1
+Stable tag: 1.1.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -79,3 +79,11 @@ WooCommerce, the Plugin, **Payment Gateways**, and a **Test Product** should alr
 ## Requirements
 - WooCommerce 3.0+
 - WordPress 5.0+
+
+## Changelog
+
+### 1.1.3
+- Fix: Resolved issue where saving settings on one tab would reset settings on other tabs by splitting option groups.
+- Fix: Enforced `wc-` prefix and character limit (20) for custom order statuses to prevent orders from reverting to "Pending Payment".
+- Fix: Renamed internal functions and options to `satodu_tweaks_` to avoid conflicts.
+- Add: Added `Requires Plugins` header to support WordPress 6.5+ dependency checking.

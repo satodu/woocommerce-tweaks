@@ -3,11 +3,12 @@
  * Plugin Name: Tweaks for WooCommerce
  * Plugin URI:  https://github.com/satodu/woocommerce-helpers
  * Description: A collection of custom tweaks and enhancements for WooCommerce, including Pix discounts, custom order statuses, and checkout improvements.
- * Version:     1.1.1
+ * Version:     1.1.3
  * Author:      Satodu
  * Author URI:  https://satodu.com
  * License:     GPL-2.0+
  * Text Domain: tweaks-for-woocommerce
+ * Requires Plugins: woocommerce
  *
  * @package TweaksForWooCommerce
  */
@@ -29,7 +30,7 @@ require_once plugin_dir_path(__FILE__) . 'admin/settings-page.php';
  *
  * @return void
  */
-function wc_tweaks_apply_custom_coupon()
+function satodu_tweaks_apply_custom_coupon()
 {
     // Verifica se o parâmetro 'coupon_code' está presente na URL
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Publicly accessible URL parameter for marketing purposes.
@@ -55,7 +56,7 @@ function wc_tweaks_apply_custom_coupon()
         exit;
     }
 }
-add_action('template_redirect', 'wc_tweaks_apply_custom_coupon');
+add_action('template_redirect', 'satodu_tweaks_apply_custom_coupon');
 
 /**
  * Display a "Remove" link in the checkout order review table.
@@ -64,7 +65,7 @@ add_action('template_redirect', 'wc_tweaks_apply_custom_coupon');
  * @param array $cart_item Cart item details.
  * @return array Modified item data with the remove link.
  */
-function wc_tweaks_display_remove_link_checkout($item_data, $cart_item)
+function satodu_tweaks_display_remove_link_checkout($item_data, $cart_item)
 {
     $product_id = $cart_item['product_id'];
     $cart_item_key = $cart_item['key'];
@@ -85,7 +86,7 @@ function wc_tweaks_display_remove_link_checkout($item_data, $cart_item)
 
     return $item_data;
 }
-add_filter('woocommerce_get_item_data', 'wc_tweaks_display_remove_link_checkout', 10, 2);
+add_filter('woocommerce_get_item_data', 'satodu_tweaks_display_remove_link_checkout', 10, 2);
 
 /**
  * Redirect Cart page to Checkout.
@@ -94,7 +95,7 @@ add_filter('woocommerce_get_item_data', 'wc_tweaks_display_remove_link_checkout'
  *
  * @return void
  */
-function wc_tweaks_redirect_cart_to_checkout()
+function satodu_tweaks_redirect_cart_to_checkout()
 {
     // Verifica se estamos na página do carrinho e se o carrinho não está vazio
     if (is_cart() && !WC()->cart->is_empty()) {
@@ -102,7 +103,7 @@ function wc_tweaks_redirect_cart_to_checkout()
         exit;
     }
 }
-add_action('template_redirect', 'wc_tweaks_redirect_cart_to_checkout');
+add_action('template_redirect', 'satodu_tweaks_redirect_cart_to_checkout');
 
 /**
  * Apply discount for Asaas Pix payments.
@@ -112,7 +113,7 @@ add_action('template_redirect', 'wc_tweaks_redirect_cart_to_checkout');
  * @param WC_Cart $cart The WooCommerce cart object.
  * @return void
  */
-function wc_tweaks_discount_for_asaas_pix($cart)
+function satodu_tweaks_discount_for_asaas_pix($cart)
 {
     if (is_admin() && !defined('DOING_AJAX')) {
         return;
@@ -120,7 +121,7 @@ function wc_tweaks_discount_for_asaas_pix($cart)
 
     // ID do método de pagamento ASAAS PIX
     $payment_method_id = 'asaas-pix';
-    $discount_percentage = get_option('wc_tweaks_pix_discount', 2); // Get from settings, default 2%
+    $discount_percentage = get_option('satodu_tweaks_pix_discount', 2); // Get from settings, default 2%
 
     // Verifica o método de pagamento escolhido
     if (WC()->session && WC()->session->get('chosen_payment_method') === $payment_method_id) {
@@ -132,7 +133,7 @@ function wc_tweaks_discount_for_asaas_pix($cart)
         }
     }
 }
-add_action('woocommerce_cart_calculate_fees', 'wc_tweaks_discount_for_asaas_pix');
+add_action('woocommerce_cart_calculate_fees', 'satodu_tweaks_discount_for_asaas_pix');
 
 /**
  * Reorder payment gateways.
@@ -142,9 +143,9 @@ add_action('woocommerce_cart_calculate_fees', 'wc_tweaks_discount_for_asaas_pix'
  * @param array $gateways List of available payment gateways.
  * @return array Reordered payment gateways.
  */
-function wc_tweaks_reorder_payment_gateways($gateways)
+function satodu_tweaks_reorder_payment_gateways($gateways)
 {
-    $settings_value = get_option('wc_tweaks_priority_gateways', 'asaas-pix, asaas-credit-card');
+    $settings_value = get_option('satodu_tweaks_priority_gateways', 'asaas-pix, asaas-credit-card');
     $new_order = array_map('trim', explode(',', $settings_value));
 
     $ordered_gateways = array();
@@ -167,16 +168,16 @@ function wc_tweaks_reorder_payment_gateways($gateways)
 
     return $ordered_gateways;
 }
-add_filter('woocommerce_payment_gateways', 'wc_tweaks_reorder_payment_gateways');
+add_filter('woocommerce_payment_gateways', 'satodu_tweaks_reorder_payment_gateways');
 
 /**
  * Register Custom Order Statuses dynamically.
  *
  * @return void
  */
-function wc_tweaks_register_custom_statuses()
+function satodu_tweaks_register_custom_statuses()
 {
-    $statuses_setting = get_option('wc_tweaks_custom_statuses', "wc-em-separacao|Em Separação\nwc-enviado|Enviado");
+    $statuses_setting = get_option('satodu_tweaks_custom_statuses', "wc-em-separacao|Em Separação\nwc-enviado|Enviado");
     $lines = explode("\n", $statuses_setting);
 
     foreach ($lines as $line) {
@@ -190,17 +191,34 @@ function wc_tweaks_register_custom_statuses()
             $slug = trim($parts[0]);
             $label = trim($parts[1]);
 
+            // Ensure slug starts with wc-
+            if (strpos($slug, 'wc-') !== 0) {
+                $slug = 'wc-' . $slug;
+            }
+
+            // Ensure slug is not longer than 20 chars (WP post_status limit)
+            if (strlen($slug) > 20) {
+                $slug = substr($slug, 0, 20);
+            }
+
             register_post_status($slug, array(
                 'label' => $label,
                 'public' => true,
                 'exclude_from_search' => false,
                 'show_in_admin_all_list' => true,
                 'show_in_admin_status_list' => true,
+                // translators: %s: count of orders with this status
+                'label_count' => array(
+                    'singular' => $label . ' <span class="count">(%s)</span>',
+                    'plural' => $label . ' <span class="count">(%s)</span>',
+                    'context' => null,
+                    'domain' => 'tweaks-for-woocommerce',
+                ),
             ));
         }
     }
 }
-add_action('init', 'wc_tweaks_register_custom_statuses');
+add_action('init', 'satodu_tweaks_register_custom_statuses');
 
 /**
  * Add custom statuses to WooCommerce order status list.
@@ -208,9 +226,9 @@ add_action('init', 'wc_tweaks_register_custom_statuses');
  * @param array $order_statuses Existing order statuses.
  * @return array Modified order statuses.
  */
-function wc_tweaks_add_custom_statuses_to_wc($order_statuses)
+function satodu_tweaks_add_custom_statuses_to_wc($order_statuses)
 {
-    $statuses_setting = get_option('wc_tweaks_custom_statuses', "wc-em-separacao|Em Separação\nwc-enviado|Enviado");
+    $statuses_setting = get_option('satodu_tweaks_custom_statuses', "wc-em-separacao|Em Separação\nwc-enviado|Enviado");
     $lines = explode("\n", $statuses_setting);
 
     foreach ($lines as $line) {
@@ -218,12 +236,23 @@ function wc_tweaks_add_custom_statuses_to_wc($order_statuses)
         if (count($parts) >= 2) {
             $slug = trim($parts[0]);
             $label = trim($parts[1]);
+
+            // Ensure slug starts with wc-
+            if (strpos($slug, 'wc-') !== 0) {
+                $slug = 'wc-' . $slug;
+            }
+
+            // Ensure slug is not longer than 20 chars
+            if (strlen($slug) > 20) {
+                $slug = substr($slug, 0, 20);
+            }
+
             $order_statuses[$slug] = $label;
         }
     }
     return $order_statuses;
 }
-add_filter('wc_order_statuses', 'wc_tweaks_add_custom_statuses_to_wc');
+add_filter('wc_order_statuses', 'satodu_tweaks_add_custom_statuses_to_wc');
 
 /**
  * Send email when status changes to "Em Separação".
@@ -234,7 +263,7 @@ add_filter('wc_order_statuses', 'wc_tweaks_add_custom_statuses_to_wc');
  * @param int $order_id Order ID.
  * @return void
  */
-function wc_tweaks_email_for_status_separating($order_id)
+function satodu_tweaks_email_for_status_separating($order_id)
 {
     if (!$order_id) {
         return;
@@ -249,7 +278,7 @@ function wc_tweaks_email_for_status_separating($order_id)
         }
     }
 }
-add_action('woocommerce_order_status_em-separacao', 'wc_tweaks_email_for_status_separating');
+add_action('woocommerce_order_status_em-separacao', 'satodu_tweaks_email_for_status_separating');
 
 /**
  * Send email when status changes to "Enviado".
@@ -260,7 +289,7 @@ add_action('woocommerce_order_status_em-separacao', 'wc_tweaks_email_for_status_
  * @param int $order_id Order ID.
  * @return void
  */
-function wc_tweaks_email_for_status_shipped($order_id)
+function satodu_tweaks_email_for_status_shipped($order_id)
 {
     if (!$order_id) {
         return;
@@ -275,4 +304,4 @@ function wc_tweaks_email_for_status_shipped($order_id)
         }
     }
 }
-add_action('woocommerce_order_status_enviado', 'wc_tweaks_email_for_status_shipped');
+add_action('woocommerce_order_status_enviado', 'satodu_tweaks_email_for_status_shipped');
